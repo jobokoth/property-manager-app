@@ -1,0 +1,394 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {
+    --pm-ink: #0f172a;
+    --pm-muted: #64748b;
+    --pm-border: #e2e8f0;
+    --pm-surface: #ffffff;
+    --pm-surface-soft: #f8fafc;
+    --pm-accent: #0ea5e9;
+    --pm-accent-strong: #0284c7;
+    --pm-success: #16a34a;
+    --pm-warning: #f59e0b;
+}
+
+body.app-body {
+    font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: var(--pm-ink);
+    background: #f3f5f9;
+    min-height: 100vh;
+    position: relative;
+}
+
+body.app-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.15), transparent 45%),
+        radial-gradient(circle at 85% 10%, rgba(34, 197, 94, 0.15), transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(15, 23, 42, 0.08), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#app {
+    position: relative;
+    z-index: 1;
+}
+
+.app-navbar {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+}
+
+.app-navbar .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #0ea5e9, #22c55e);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1rem;
+    box-shadow: 0 12px 22px rgba(14, 165, 233, 0.35);
+}
+
+.brand-text {
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #ffffff;
+}
+
+.app-navbar .nav-link {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link.active {
+    color: #ffffff;
+}
+
+.avatar-sm {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.2rem;
+}
+
+.app-shell {
+    display: flex;
+    min-height: calc(100vh - 76px);
+}
+
+.app-sidebar {
+    width: 260px;
+    padding: 1.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-right: 1px solid var(--pm-border);
+    backdrop-filter: blur(6px);
+}
+
+.sidebar-section {
+    position: sticky;
+    top: 96px;
+}
+
+.sidebar-title {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    color: var(--pm-muted);
+    margin-bottom: 1rem;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 12px;
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+}
+
+.sidebar-link i {
+    width: 20px;
+    text-align: center;
+    color: var(--pm-muted);
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: rgba(14, 165, 233, 0.12);
+    color: var(--pm-accent-strong);
+}
+
+.sidebar-link.active i,
+.sidebar-link:hover i {
+    color: var(--pm-accent-strong);
+}
+
+.app-main {
+    flex: 1;
+    padding: 2rem 0 3rem;
+}
+
+.app-content {
+    padding: 2rem 0 3rem;
+    width: 100%;
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.page-title {
+    font-size: clamp(1.5rem, 1.1rem + 1vw, 2.2rem);
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.page-subtitle {
+    color: var(--pm-muted);
+    margin-bottom: 0;
+}
+
+.app-card {
+    border: 1px solid var(--pm-border);
+    border-radius: 18px;
+    background: var(--pm-surface);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.app-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--pm-border);
+    font-weight: 600;
+}
+
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    inset: auto -10% -45% auto;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.25), transparent 70%);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(14, 165, 233, 0.12);
+    color: var(--pm-accent);
+    font-size: 1.25rem;
+}
+
+.app-table thead th {
+    color: #475569;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border-bottom: 1px solid var(--pm-border);
+}
+
+.app-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.app-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.btn-primary {
+    background-color: var(--pm-accent);
+    border-color: var(--pm-accent);
+    box-shadow: 0 12px 24px rgba(14, 165, 233, 0.25);
+}
+
+.btn-primary:hover {
+    background-color: var(--pm-accent-strong);
+    border-color: var(--pm-accent-strong);
+}
+
+.form-control,
+.form-select,
+.form-check-input {
+    border-radius: 12px;
+    border-color: var(--pm-border);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: rgba(14, 165, 233, 0.5);
+    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.15);
+}
+
+.auth-card {
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.auth-card .card-body {
+    padding: 2.5rem;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(14, 165, 233, 0.12);
+    color: var(--pm-accent-strong);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.2px;
+}
+
+.hero-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 22px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 24px 45px rgba(15, 23, 42, 0.12);
+}
+
+.welcome-panel {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 26px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+    overflow: hidden;
+}
+
+.welcome-illustration {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(34, 197, 94, 0.12));
+    border-radius: 20px;
+    padding: 2rem;
+    min-height: 320px;
+}
+
+.welcome-illustration svg {
+    width: 100%;
+    height: auto;
+}
+
+.welcome-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.app-alert {
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.reveal {
+    animation: riseIn 0.6s ease both;
+}
+
+.reveal.delay-1 {
+    animation-delay: 0.08s;
+}
+
+.reveal.delay-2 {
+    animation-delay: 0.16s;
+}
+
+.reveal.delay-3 {
+    animation-delay: 0.24s;
+}
+
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .app-shell {
+        flex-direction: column;
+    }
+
+    .app-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--pm-border);
+    }
+
+    .sidebar-section {
+        position: static;
+    }
+
+    .auth-card .card-body {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .app-sidebar {
+        display: none;
+    }
+
+    .app-main {
+        padding-top: 1.5rem;
+    }
+}
