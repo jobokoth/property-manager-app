@@ -24,18 +24,26 @@ class ServiceRequestController extends Controller
     public function index(): View
     {
         $user = auth()->user();
-        if (!$user->can('requests.view')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $query = ServiceRequest::with(['property', 'unit', 'tenant', 'tenancy']);
+
+        $unitLabel = null;
         if ($user->hasRole('tenant')) {
             $query->where('tenant_user_id', $user->id);
+
+            // Get the unit label for the page title
+            $activeTenancy = Tenancy::with('unit')
+                ->where('tenant_user_id', $user->id)
+                ->where('status', 'active')
+                ->first();
+
+            if ($activeTenancy) {
+                $unitLabel = $activeTenancy->unit->label;
+            }
         }
 
         $serviceRequests = $query->paginate(15);
 
-        return view('service-requests.index', compact('serviceRequests'));
+        return view('service-requests.index', compact('serviceRequests', 'unitLabel'));
     }
 
     /**
@@ -44,9 +52,6 @@ class ServiceRequestController extends Controller
     public function create(): View
     {
         $user = auth()->user();
-        if (!$user->can('requests.create')) {
-            abort(403, 'Unauthorized access');
-        }
 
         if ($user->hasRole('tenant')) {
             $activeTenancy = Tenancy::with('unit.property')
@@ -76,9 +81,6 @@ class ServiceRequestController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (!$user->can('requests.create')) {
-            abort(403, 'Unauthorized access');
-        }
 
         if ($user->hasRole('tenant')) {
             $activeTenancy = Tenancy::with('unit')
@@ -98,7 +100,7 @@ class ServiceRequestController extends Controller
                 'priority' => 'required|in:low,medium,high,urgent',
                 'images' => 'nullable|array|max:10',
                 'images.*' => 'file|mimes:jpg,jpeg,png,webp',
-                'videos' => 'nullable|array|max:3',
+                'videos' => 'nullable|array|max:1',
                 'videos.*' => 'file|mimes:mp4,mov',
             ]);
 
@@ -152,20 +154,8 @@ class ServiceRequestController extends Controller
     public function show(ServiceRequest $serviceRequest): View
     {
         $user = auth()->user();
-        if (!$user->can('requests.view') && !$user->hasRole('vendor')) {
-            abort(403, 'Unauthorized access');
-        }
 
-        if ($user->hasRole('tenant') && $serviceRequest->tenant_user_id !== $user->id) {
-            abort(403, 'Unauthorized access');
-        }
-
-        // Vendors can only see requests assigned to them
-        if ($user->hasRole('vendor') && $serviceRequest->assigned_vendor_id !== $user->id) {
-            abort(403, 'Unauthorized access');
-        }
-
-        $serviceRequest->load(['property', 'unit', 'tenant', 'tenancy', 'media', 'assignedVendor', 'quotes.vendor', 'invoices.vendor']);
+        $serviceRequest->load(['property', 'unit', 'tenant', 'tenancy', 'media', 'assignedVendor', 'quotes.vendor', 'invoices.vendor', 'comments.user']);
 
         // Get available vendors for assignment (property managers and owners)
         $availableVendors = [];
@@ -184,21 +174,9 @@ class ServiceRequestController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('tenant')) {
-            if (!$user->can('requests.create')) {
-                abort(403, 'Unauthorized access');
-            }
-
-            if ($serviceRequest->tenant_user_id !== $user->id) {
-                abort(403, 'Unauthorized access');
-            }
-
             $serviceRequest->load(['property', 'unit', 'tenant', 'tenancy']);
 
             return view('service-requests.edit', compact('serviceRequest'));
-        }
-
-        if (!$user->can('requests.update_status')) {
-            abort(403, 'Unauthorized access');
         }
 
         $units = Unit::all();
@@ -217,14 +195,6 @@ class ServiceRequestController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('tenant')) {
-            if (!$user->can('requests.create')) {
-                abort(403, 'Unauthorized access');
-            }
-
-            if ($serviceRequest->tenant_user_id !== $user->id) {
-                abort(403, 'Unauthorized access');
-            }
-
             $validatedData = $request->validate([
                 'category' => 'sometimes|required|in:plumbing,electrical,carpentry,painting,cleaning,appliance,security,other',
                 'title' => 'sometimes|required|string|max:255',
@@ -243,10 +213,6 @@ class ServiceRequestController extends Controller
 
             return redirect()->route('service-requests.index')
                              ->with('success', 'Service request updated successfully.');
-        }
-
-        if (!$user->can('requests.update_status')) {
-            abort(403, 'Unauthorized access');
         }
 
         $validatedData = $request->validate([
@@ -279,11 +245,6 @@ class ServiceRequestController extends Controller
      */
     public function destroy(ServiceRequest $serviceRequest): RedirectResponse
     {
-        $user = auth()->user();
-        if (!$user->can('requests.update_status')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $serviceRequest->delete();
 
         return redirect()->route('service-requests.index')
@@ -332,11 +293,6 @@ class ServiceRequestController extends Controller
      */
     public function assignVendor(Request $request, ServiceRequest $serviceRequest): RedirectResponse
     {
-        $user = auth()->user();
-        if (!$user->can('requests.assign_vendor')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $validated = $request->validate([
             'vendor_id' => 'required|exists:users,id',
             'assignment_notes' => 'nullable|string|max:1000',
@@ -365,11 +321,6 @@ class ServiceRequestController extends Controller
      */
     public function removeVendor(ServiceRequest $serviceRequest): RedirectResponse
     {
-        $user = auth()->user();
-        if (!$user->can('requests.assign_vendor')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $serviceRequest->update([
             'assigned_vendor_id' => null,
             'assigned_at' => null,
@@ -385,18 +336,12 @@ class ServiceRequestController extends Controller
      */
     public function approveQuote(ServiceRequest $serviceRequest, ServiceQuote $quote): RedirectResponse
     {
-        $user = auth()->user();
-
-        // Only property managers, owners, or super admins can approve quotes
-        if (!$user->can('requests.assign_vendor') && !$user->hasRole(['owner', 'super_admin'])) {
-            abort(403, 'Unauthorized access');
-        }
-
         // Verify the quote belongs to this service request
         if ($quote->service_request_id !== $serviceRequest->id) {
             abort(404, 'Quote not found for this service request.');
         }
 
+        $user = auth()->user();
         $quote->update([
             'status' => 'approved',
             'reviewed_by_user_id' => $user->id,
@@ -414,13 +359,6 @@ class ServiceRequestController extends Controller
      */
     public function rejectQuote(Request $request, ServiceRequest $serviceRequest, ServiceQuote $quote): RedirectResponse
     {
-        $user = auth()->user();
-
-        // Only property managers, owners, or super admins can reject quotes
-        if (!$user->can('requests.assign_vendor') && !$user->hasRole(['owner', 'super_admin'])) {
-            abort(403, 'Unauthorized access');
-        }
-
         // Verify the quote belongs to this service request
         if ($quote->service_request_id !== $serviceRequest->id) {
             abort(404, 'Quote not found for this service request.');
@@ -430,6 +368,7 @@ class ServiceRequestController extends Controller
             'review_notes' => 'nullable|string|max:1000',
         ]);
 
+        $user = auth()->user();
         $quote->update([
             'status' => 'rejected',
             'reviewed_by_user_id' => $user->id,

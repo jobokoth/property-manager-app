@@ -43,9 +43,11 @@
                             <p><strong>Created At:</strong> {{ $serviceRequest->created_at->format('M d, Y H:i') }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Property:</strong> {{ $serviceRequest->property->name }}</p>
-                            <p><strong>Unit:</strong> {{ $serviceRequest->unit->label }}</p>
-                            <p><strong>Tenant:</strong> {{ $serviceRequest->tenant->name }}</p>
+                            @unless(auth()->user()->hasRole('tenant'))
+                                <p><strong>Property:</strong> {{ $serviceRequest->property->name }}</p>
+                                <p><strong>Unit:</strong> {{ $serviceRequest->unit->label }}</p>
+                                <p><strong>Tenant:</strong> {{ $serviceRequest->tenant->name }}</p>
+                            @endunless
                             <p><strong>Updated At:</strong> {{ $serviceRequest->updated_at->format('M d, Y H:i') }}</p>
                         </div>
                     </div>
@@ -372,5 +374,113 @@
             </div>
         </div>
     @endif
+
+    <!-- Comments Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Comments & Updates</h5>
+                    <span class="badge bg-primary">{{ $serviceRequest->comments->count() }} comments</span>
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment Form -->
+                    @can('requests.add_comment')
+                        <form action="{{ route('service-requests.comments.store', $serviceRequest) }}" method="POST" class="mb-4">
+                            @csrf
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Add a Comment</label>
+                                <textarea class="form-control @error('comment') is-invalid @enderror"
+                                          id="comment" name="comment" rows="3" required
+                                          placeholder="Write your comment here...">{{ old('comment') }}</textarea>
+                                @error('comment')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="type" class="form-label">Comment Type</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="note">General Note</option>
+                                        <option value="clarification">Clarification</option>
+                                        <option value="status_update">Status Update</option>
+                                        @can('requests.view_internal_comments')
+                                            <option value="internal">Internal Note</option>
+                                        @endcan
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3 d-flex align-items-end">
+                                    @can('requests.view_internal_comments')
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="is_internal" id="is_internal" value="1">
+                                            <label class="form-check-label" for="is_internal">
+                                                Mark as Internal (not visible to tenants)
+                                            </label>
+                                        </div>
+                                    @endcan
+                                </div>
+                                <div class="col-md-4 mb-3 d-flex align-items-end justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa-solid fa-paper-plane me-1"></i> Post Comment
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <hr>
+                    @endcan
+
+                    <!-- Comments List -->
+                    <div class="comments-list">
+                        @php
+                            $canViewInternal = auth()->user()->can('requests.view_internal_comments');
+                            $commentsToShow = $canViewInternal
+                                ? $serviceRequest->comments
+                                : $serviceRequest->comments->where('is_internal', false);
+                        @endphp
+
+                        @forelse($commentsToShow as $comment)
+                            <div class="comment-item mb-3 p-3 border rounded {{ $comment->is_internal ? 'bg-light border-warning' : '' }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong>{{ $comment->user->name }}</strong>
+                                        @if($comment->user->hasRole('tenant'))
+                                            <span class="badge bg-info ms-1">Tenant</span>
+                                        @elseif($comment->user->hasRole('vendor'))
+                                            <span class="badge bg-secondary ms-1">Vendor</span>
+                                        @elseif($comment->user->hasRole('caretaker'))
+                                            <span class="badge bg-success ms-1">Caretaker</span>
+                                        @elseif($comment->user->hasRole(['property_manager', 'owner', 'super_admin']))
+                                            <span class="badge bg-primary ms-1">Manager</span>
+                                        @endif
+                                        <span class="badge {{ $comment->getTypeBadgeClass() }} ms-1">{{ ucfirst($comment->type) }}</span>
+                                        @if($comment->is_internal)
+                                            <span class="badge bg-warning text-dark ms-1">
+                                                <i class="fa-solid fa-lock"></i> Internal
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <small class="text-muted me-2">{{ $comment->created_at->diffForHumans() }}</small>
+                                        @if($comment->user_id === auth()->id() || auth()->user()->hasRole(['super_admin', 'property_manager', 'owner']))
+                                            <form action="{{ route('service-requests.comments.destroy', [$serviceRequest, $comment]) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0" onclick="return confirm('Delete this comment?')">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                                <p class="mb-0">{{ $comment->comment }}</p>
+                            </div>
+                        @empty
+                            <p class="text-muted text-center">No comments yet. Be the first to add a comment!</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

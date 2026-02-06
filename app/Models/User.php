@@ -20,6 +20,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'phone',
         'password',
@@ -49,6 +51,34 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function getNameAttribute(): string
+    {
+        $first = $this->attributes['first_name'] ?? '';
+        $last = $this->attributes['last_name'] ?? '';
+        $full = trim($first . ' ' . $last);
+
+        if ($full !== '') {
+            return $full;
+        }
+
+        return (string) ($this->attributes['name'] ?? '');
+    }
+
+    public function setNameAttribute(?string $value): void
+    {
+        $value = trim((string) $value);
+        $this->attributes['name'] = $value;
+
+        $hasFirst = array_key_exists('first_name', $this->attributes) && $this->attributes['first_name'] !== null && $this->attributes['first_name'] !== '';
+        $hasLast = array_key_exists('last_name', $this->attributes) && $this->attributes['last_name'] !== null && $this->attributes['last_name'] !== '';
+
+        if (!$hasFirst && !$hasLast && $value !== '') {
+            $parts = preg_split('/\s+/', $value, 2);
+            $this->attributes['first_name'] = $parts[0] ?? null;
+            $this->attributes['last_name'] = $parts[1] ?? null;
+        }
     }
 
     /**
@@ -118,5 +148,56 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Tenancies for this user (as tenant)
+     */
+    public function tenancies()
+    {
+        return $this->hasMany(\App\Models\Tenancy::class, 'tenant_user_id');
+    }
+
+    /**
+     * Properties where user is caretaker
+     */
+    public function caretakerProperties()
+    {
+        return $this->belongsToMany(\App\Models\Property::class, 'property_user')
+                    ->withPivot('relationship_type', 'is_primary')
+                    ->withTimestamps()
+                    ->wherePivot('relationship_type', 'caretaker');
+    }
+
+    /**
+     * Caretaker tasks assigned to this user
+     */
+    public function caretakerTasks()
+    {
+        return $this->hasMany(\App\Models\CaretakerTask::class, 'caretaker_user_id');
+    }
+
+    /**
+     * Caretaker tasks assigned by this user
+     */
+    public function assignedCaretakerTasks()
+    {
+        return $this->hasMany(\App\Models\CaretakerTask::class, 'assigned_by_user_id');
+    }
+
+    /**
+     * Tenant invites sent by this user
+     */
+    public function sentTenantInvites()
+    {
+        return $this->hasMany(\App\Models\TenantInvite::class, 'invited_by_user_id');
+    }
+
+    /**
+     * Service request comments made by this user
+     */
+    public function serviceRequestComments()
+    {
+        return $this->hasMany(\App\Models\ServiceRequestComment::class);
     }
 }

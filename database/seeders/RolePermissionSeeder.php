@@ -38,6 +38,8 @@ class RolePermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'requests.view']);
         Permission::firstOrCreate(['name' => 'requests.assign_vendor']);
         Permission::firstOrCreate(['name' => 'requests.update_status']);
+        Permission::firstOrCreate(['name' => 'requests.add_comment']);
+        Permission::firstOrCreate(['name' => 'requests.view_internal_comments']);
 
         // Create permissions for Vendors module
         Permission::firstOrCreate(['name' => 'vendors.view_jobs']);
@@ -64,17 +66,42 @@ class RolePermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'admin.users.toggle_status']);
         Permission::firstOrCreate(['name' => 'admin.roles.assign']);
 
+        // Create permissions for Caretaker Tasks module
+        Permission::firstOrCreate(['name' => 'caretaker_tasks.view']);
+        Permission::firstOrCreate(['name' => 'caretaker_tasks.create']);
+        Permission::firstOrCreate(['name' => 'caretaker_tasks.update']);
+        Permission::firstOrCreate(['name' => 'caretaker_tasks.delete']);
+        Permission::firstOrCreate(['name' => 'caretaker_tasks.complete']);
+
+        // Create permissions for Tenant Invites module
+        Permission::firstOrCreate(['name' => 'invites.create']);
+        Permission::firstOrCreate(['name' => 'invites.view']);
+        Permission::firstOrCreate(['name' => 'invites.cancel']);
+
+        // Create permissions for Account Management
+        Permission::firstOrCreate(['name' => 'tenants.create']);
+        Permission::firstOrCreate(['name' => 'tenants.update']);
+        Permission::firstOrCreate(['name' => 'vendors.create']);
+        Permission::firstOrCreate(['name' => 'vendors.update']);
+
+        // Create permissions for Messaging
+        Permission::firstOrCreate(['name' => 'messages.send_to_all_roles']);
+        Permission::firstOrCreate(['name' => 'messages.send_to_tenants']);
+        Permission::firstOrCreate(['name' => 'messages.send_to_pm']);
+
         // Create roles
         $tenantRole = Role::firstOrCreate(['name' => 'tenant']);
         $propertyManagerRole = Role::firstOrCreate(['name' => 'property_manager']);
         $ownerRole = Role::firstOrCreate(['name' => 'owner']);
         $vendorRole = Role::firstOrCreate(['name' => 'vendor']);
+        $caretakerRole = Role::firstOrCreate(['name' => 'caretaker']);
         $superAdminRole = Role::firstOrCreate(['name' => 'super_admin']);
 
         // Assign permissions to Tenant role
         $tenantRole->syncPermissions([
             'requests.create',
             'requests.view',
+            'requests.add_comment',
             'payments.submit_mpesa',
             'statements.generate'
         ]);
@@ -93,13 +120,32 @@ class RolePermissionSeeder extends Seeder
             'requests.view',
             'requests.assign_vendor',
             'requests.update_status',
+            'requests.add_comment',
+            'requests.view_internal_comments',
             'notifications.send_individual',
             'notifications.send_group',
             'water.readings.create',
-            'water.readings.view'
+            'water.readings.view',
+            // Caretaker task management
+            'caretaker_tasks.view',
+            'caretaker_tasks.create',
+            'caretaker_tasks.update',
+            'caretaker_tasks.delete',
+            // Tenant invites
+            'invites.create',
+            'invites.view',
+            'invites.cancel',
+            // Account management
+            'tenants.create',
+            'tenants.update',
+            'vendors.create',
+            'vendors.update',
+            // Messaging
+            'messages.send_to_all_roles',
         ]);
 
         // Assign permissions to Owner role
+        // Same as Property Manager but scoped to owned properties only
         $ownerRole->syncPermissions([
             'properties.view',
             'properties.create',
@@ -114,11 +160,29 @@ class RolePermissionSeeder extends Seeder
             'requests.view',
             'requests.assign_vendor',
             'requests.update_status',
+            'requests.add_comment',
+            'requests.view_internal_comments',
             'notifications.send_individual',
             'notifications.send_group',
             'water.readings.create',
             'water.readings.view',
-            'water.billing.configure'
+            'water.billing.configure',
+            // Caretaker task management
+            'caretaker_tasks.view',
+            'caretaker_tasks.create',
+            'caretaker_tasks.update',
+            'caretaker_tasks.delete',
+            // Tenant invites
+            'invites.create',
+            'invites.view',
+            'invites.cancel',
+            // Account management
+            'tenants.create',
+            'tenants.update',
+            'vendors.create',
+            'vendors.update',
+            // Messaging
+            'messages.send_to_all_roles',
         ]);
 
         // Assign permissions to Vendor role
@@ -127,7 +191,22 @@ class RolePermissionSeeder extends Seeder
             'vendors.submit_quote',
             'vendors.schedule_work',
             'vendors.submit_invoice',
-            'vendors.confirm_payment'
+            'vendors.confirm_payment',
+            'requests.view',  // Can view assigned service requests
+            'requests.add_comment',
+            'messages.send_to_pm',
+        ]);
+
+        // Assign permissions to Caretaker role
+        $caretakerRole->syncPermissions([
+            'requests.view',
+            'requests.add_comment',
+            'caretaker_tasks.view',
+            'caretaker_tasks.update',
+            'caretaker_tasks.complete',
+            'messages.send_to_tenants',
+            'messages.send_to_pm',
+            'notifications.send_individual',
         ]);
 
         // Assign all permissions to Super Admin role

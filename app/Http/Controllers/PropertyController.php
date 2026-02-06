@@ -15,11 +15,6 @@ class PropertyController extends Controller
      */
     public function index(): View
     {
-        $user = auth()->user();
-        if (!$user->can('properties.view')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $properties = Property::with('owner')->paginate(10);
 
         return view('properties.index', compact('properties'));
@@ -31,11 +26,17 @@ class PropertyController extends Controller
     public function create(): View
     {
         $user = auth()->user();
-        if (!$user->can('properties.create')) {
-            abort(403, 'Unauthorized access');
+
+        // Get available property managers
+        $propertyManagers = User::role('property_manager')->where('status', 'active')->get();
+
+        // For super_admin, also get owners list
+        $owners = [];
+        if ($user->hasRole('super_admin')) {
+            $owners = User::role('owner')->where('status', 'active')->get();
         }
 
-        return view('properties.create');
+        return view('properties.create', compact('propertyManagers', 'owners'));
     }
 
     /**
@@ -44,18 +45,35 @@ class PropertyController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = auth()->user();
-        if (!$user->can('properties.create')) {
-            abort(403, 'Unauthorized access');
-        }
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string',
             'owner_user_id' => 'nullable|exists:users,id',
+            'property_manager_id' => 'nullable|exists:users,id',
             'status' => 'required|in:active,inactive,maintenance'
         ]);
 
-        Property::create($validatedData);
+        // If owner is creating, they are automatically the owner
+        if ($user->hasRole('owner') && !$user->hasRole('super_admin')) {
+            $validatedData['owner_user_id'] = $user->id;
+        }
+
+        $propertyManagerId = $validatedData['property_manager_id'] ?? null;
+        unset($validatedData['property_manager_id']);
+
+        $property = Property::create($validatedData);
+
+        // Assign property manager if selected
+        if ($propertyManagerId) {
+            $manager = User::find($propertyManagerId);
+            if ($manager && $manager->hasRole('property_manager')) {
+                $property->managers()->attach($manager->id, [
+                    'relationship_type' => 'manager',
+                    'is_primary' => true,
+                ]);
+            }
+        }
 
         return redirect()->route('properties.index')
                          ->with('success', 'Property created successfully.');
@@ -67,9 +85,6 @@ class PropertyController extends Controller
     public function show(Property $property): View
     {
         $user = auth()->user();
-        if (!$user->can('properties.view')) {
-            abort(403, 'Unauthorized access');
-        }
 
         $property->load(['owner', 'units', 'tenancies', 'managers', 'vendors', 'caretakers']);
 
@@ -94,11 +109,20 @@ class PropertyController extends Controller
     public function edit(Property $property): View
     {
         $user = auth()->user();
-        if (!$user->can('properties.update')) {
-            abort(403, 'Unauthorized access');
+
+        // Get available property managers
+        $propertyManagers = User::role('property_manager')->where('status', 'active')->get();
+
+        // Get current assigned manager (primary)
+        $currentManagerId = $property->managers()->wherePivot('is_primary', true)->first()?->id;
+
+        // For super_admin, also get owners list
+        $owners = [];
+        if ($user->hasRole('super_admin')) {
+            $owners = User::role('owner')->where('status', 'active')->get();
         }
 
-        return view('properties.edit', compact('property'));
+        return view('properties.edit', compact('property', 'propertyManagers', 'currentManagerId', 'owners'));
     }
 
     /**
@@ -107,18 +131,41 @@ class PropertyController extends Controller
     public function update(Request $request, Property $property): RedirectResponse
     {
         $user = auth()->user();
-        if (!$user->can('properties.update')) {
-            abort(403, 'Unauthorized access');
-        }
 
         $validatedData = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'location' => 'sometimes|required|string',
             'owner_user_id' => 'nullable|exists:users,id',
+            'property_manager_id' => 'nullable|exists:users,id',
             'status' => 'sometimes|required|in:active,inactive,maintenance'
         ]);
 
+        // Non-super_admin owners cannot change the owner
+        if (!$user->hasRole('super_admin')) {
+            unset($validatedData['owner_user_id']);
+        }
+
+        $propertyManagerId = $validatedData['property_manager_id'] ?? null;
+        unset($validatedData['property_manager_id']);
+
         $property->update($validatedData);
+
+        // Update primary property manager if changed
+        if ($request->has('property_manager_id')) {
+            // Remove current primary manager
+            $property->managers()->wherePivot('is_primary', true)->detach();
+
+            // Assign new primary manager if selected
+            if ($propertyManagerId) {
+                $manager = User::find($propertyManagerId);
+                if ($manager && $manager->hasRole('property_manager')) {
+                    $property->managers()->attach($manager->id, [
+                        'relationship_type' => 'manager',
+                        'is_primary' => true,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('properties.index')
                          ->with('success', 'Property updated successfully.');
@@ -129,11 +176,6 @@ class PropertyController extends Controller
      */
     public function destroy(Property $property): RedirectResponse
     {
-        $user = auth()->user();
-        if (!$user->can('properties.delete')) {
-            abort(403, 'Unauthorized access');
-        }
-
         $property->delete();
 
         return redirect()->route('properties.index')

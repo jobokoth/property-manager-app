@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:\\\\xampp\\\\htdocs\\\\property-manager\\\\property-manager-app\\\\resources\"\" 2>/dev/null || echo \"Views directory not found \")",
+      "Bash(find:*)",
+      "Bash(php artisan:*)"
+    ]
+  }
+}

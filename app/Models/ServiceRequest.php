@@ -112,4 +112,32 @@ class ServiceRequest extends Model
     {
         return !is_null($this->assigned_vendor_id);
     }
+
+    /**
+     * Relationship to comments
+     */
+    public function comments()
+    {
+        return $this->hasMany(ServiceRequestComment::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relationship to public comments (non-internal)
+     */
+    public function publicComments()
+    {
+        return $this->hasMany(ServiceRequestComment::class)
+                    ->where('is_internal', false)
+                    ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relationship to internal comments
+     */
+    public function internalComments()
+    {
+        return $this->hasMany(ServiceRequestComment::class)
+                    ->where('is_internal', true)
+                    ->orderBy('created_at', 'desc');
+    }
 }

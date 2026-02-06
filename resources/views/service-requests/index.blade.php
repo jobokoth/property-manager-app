@@ -5,7 +5,13 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Service Requests</h1>
+                <h1>
+                    @if(auth()->user()->hasRole('tenant') && $unitLabel)
+                        Service Requests for {{ $unitLabel }}
+                    @else
+                        Service Requests
+                    @endif
+                </h1>
                 @can('requests.create')
                     <a href="{{ route('service-requests.create') }}" class="btn btn-primary">New Request</a>
                 @endcan
@@ -24,8 +30,10 @@
                                     <th>ID</th>
                                     <th>Title</th>
                                     <th>Category</th>
-                                    <th>Tenant</th>
-                                    <th>Unit</th>
+                                    @unless(auth()->user()->hasRole('tenant'))
+                                        <th>Tenant</th>
+                                        <th>Unit</th>
+                                    @endunless
                                     <th>Priority</th>
                                     <th>Status</th>
                                     <th>Created At</th>
@@ -42,8 +50,10 @@
                                                 {{ ucfirst($request->category) }}
                                             </span>
                                         </td>
-                                        <td>{{ $request->tenant->name }}</td>
-                                        <td>{{ $request->unit->label }}</td>
+                                        @unless(auth()->user()->hasRole('tenant'))
+                                            <td>{{ $request->tenant->name }}</td>
+                                            <td>{{ $request->unit->label }}</td>
+                                        @endunless
                                         <td>
                                             <span class="badge bg-{{ $request->priority == 'high' || $request->priority == 'urgent' ? 'danger' : ($request->priority == 'medium' ? 'warning' : 'success') }}">
                                                 {{ ucfirst($request->priority) }}
@@ -64,7 +74,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="text-center">No service requests found</td>
+                                        <td colspan="{{ auth()->user()->hasRole('tenant') ? '7' : '9' }}" class="text-center">No service requests found</td>
                                     </tr>
                                 @endforelse
                             </tbody>

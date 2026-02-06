@@ -19,7 +19,7 @@ class MpesaMessageParserService
         $normalizedMessage = preg_replace('/\s+/', ' ', trim($message));
 
         $patterns = [
-            'default' => '/^([A-Z0-9]+)\s+Confirmed\.\s+Ksh([\d,]+\.\d{2})\s+sent\s+to\s+.+?\s+on\s+(\d{1,2}\/\d{1,2}\/\d{2,4}\s+at\s+\d{1,2}:\d{2}\s+[AP]M)\./i'
+            'default' => '/^([A-Z0-9]+)\s+Confirmed\.\s+Ksh([\d,]+\.\d{2})\s+sent\s+to\s+.+?\s+on\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s?[AP]M)\./i'
         ];
 
         $matchedPattern = null;
@@ -39,8 +39,10 @@ class MpesaMessageParserService
             $transId = $matches[1];
             $amount = (float) str_replace(',', '', $matches[2]);
             
-            // Correctly parse the date format e.g. "17/1/26 at 12:38 PM"
-            $transTime = Carbon::createFromFormat('j/n/y \a\t h:i A', $matches[3]);
+            $datePart = $matches[3];
+            $timePart = strtoupper(str_replace(' ', '', $matches[4]));
+            $dateTime = $datePart . ' ' . $timePart;
+            $transTime = Carbon::createFromFormat('j/n/y h:iA', $dateTime);
 
             return [
                 'trans_id' => $transId,

@@ -131,6 +131,36 @@
                                 </li>
                             @endif
 
+                            @if(auth()->user()->hasRole('caretaker'))
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('my-tasks*') || request()->is('caretaker-tasks*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fa-solid fa-clipboard-list me-1"></i> Caretaker
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{{ route('caretaker-tasks.my-tasks') }}">My Tasks</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('service-requests.index') }}">Service Requests</a></li>
+                                    </ul>
+                                </li>
+                            @endif
+
+                            @can('properties.manage_caretakers')
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('caretakers*') || request()->is('caretaker-tasks*') || request()->is('tenant-invites*') || request()->is('manage/*') || request()->is('messages*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fa-solid fa-users-gear me-1"></i> Manage
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{{ route('messages.index') }}">Messages</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ route('caretakers.index') }}">Caretakers</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('caretaker-tasks.index') }}">Caretaker Tasks</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ route('tenant-invites.index') }}">Tenant Invitations</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('manage.tenants.index') }}">Manage Tenants</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('manage.vendors.index') }}">Manage Vendors</a></li>
+                                    </ul>
+                                </li>
+                            @endcan
+
                             @if(auth()->user()->hasRole('super_admin'))
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown">
@@ -161,6 +191,55 @@
                             </li>
                         @endif
                     @else
+                        <!-- Notification Bell -->
+                        <li class="nav-item me-2">
+                            <a class="nav-link position-relative {{ request()->is('messages*') ? 'active' : '' }}" href="{{ route('messages.index') }}">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                @if($unreadMessageCount > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                        {{ $unreadMessageCount > 99 ? '99+' : $unreadMessageCount }}
+                                    </span>
+                                @endif
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-bell"></i>
+                                @if($unreadNotificationCount > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                        {{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}
+                                    </span>
+                                @endif
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="min-width: 300px;">
+                                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>Notifications</span>
+                                    @if($unreadNotificationCount > 0)
+                                        <span class="badge bg-primary">{{ $unreadNotificationCount }} new</span>
+                                    @endif
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                @forelse($recentNotifications as $notification)
+                                    <li>
+                                        <a class="dropdown-item {{ $notification->status !== 'read' ? 'fw-bold' : '' }}" href="{{ route('notifications.index') }}">
+                                            <div class="d-flex align-items-start">
+                                                @if($notification->status !== 'read')
+                                                    <span class="badge bg-primary me-2" style="margin-top: 4px;">New</span>
+                                                @endif
+                                                <div class="flex-grow-1">
+                                                    <div class="text-truncate" style="max-width: 220px;">{{ $notification->message->subject ?? 'Notification' }}</div>
+                                                    <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                @empty
+                                    <li><span class="dropdown-item text-muted">No notifications</span></li>
+                                @endforelse
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-center text-primary" href="{{ route('notifications.index') }}">View All Notifications</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <span class="avatar-sm">
@@ -227,6 +306,25 @@
                                 <i class="fa-solid fa-screwdriver-wrench"></i> Service Requests
                             </a>
                         @endcan
+                        @if(auth()->user()->hasRole(['tenant', 'owner', 'super_admin']))
+                            <a class="sidebar-link {{ request()->is('statements*') ? 'active' : '' }}" href="{{ route('statements.index') }}">
+                                <i class="fa-solid fa-file-invoice"></i> Statements
+                            </a>
+                        @endif
+                        <a class="sidebar-link {{ request()->is('notifications*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
+                            <i class="fa-solid fa-bell"></i> Notifications
+                            @if($unreadNotificationCount > 0)
+                                <span class="badge bg-danger ms-auto">{{ $unreadNotificationCount }}</span>
+                            @endif
+                        </a>
+                        <a class="sidebar-link {{ request()->is('messages*') ? 'active' : '' }}" href="{{ route('messages.index') }}">
+                            <i class="fa-solid fa-paper-plane"></i> Messages
+                        </a>
+                        @can('water.readings.view')
+                            <a class="sidebar-link {{ request()->is('water*') ? 'active' : '' }}" href="{{ route('water.index') }}">
+                                <i class="fa-solid fa-droplet"></i> Water
+                            </a>
+                        @endcan
                         @if(auth()->user()->hasRole('vendor'))
                             <p class="sidebar-title mt-4">Vendor</p>
                             <a class="sidebar-link {{ request()->is('vendor/dashboard') ? 'active' : '' }}" href="{{ route('vendor.dashboard') }}">
@@ -239,6 +337,33 @@
                                 <i class="fa-solid fa-file-invoice"></i> My Invoices
                             </a>
                         @endif
+                        @if(auth()->user()->hasRole('caretaker'))
+                            <p class="sidebar-title mt-4">Caretaker</p>
+                            <a class="sidebar-link {{ request()->is('my-tasks') ? 'active' : '' }}" href="{{ route('caretaker-tasks.my-tasks') }}">
+                                <i class="fa-solid fa-clipboard-list"></i> My Tasks
+                            </a>
+                        @endif
+                        @can('properties.manage_caretakers')
+                            <p class="sidebar-title mt-4">Management</p>
+                            <a class="sidebar-link {{ request()->is('messages*') ? 'active' : '' }}" href="{{ route('messages.index') }}">
+                                <i class="fa-solid fa-paper-plane"></i> Messages
+                            </a>
+                            <a class="sidebar-link {{ request()->is('caretakers*') ? 'active' : '' }}" href="{{ route('caretakers.index') }}">
+                                <i class="fa-solid fa-user-tie"></i> Caretakers
+                            </a>
+                            <a class="sidebar-link {{ request()->is('caretaker-tasks*') && !request()->is('my-tasks') ? 'active' : '' }}" href="{{ route('caretaker-tasks.index') }}">
+                                <i class="fa-solid fa-tasks"></i> Caretaker Tasks
+                            </a>
+                            <a class="sidebar-link {{ request()->is('tenant-invites*') ? 'active' : '' }}" href="{{ route('tenant-invites.index') }}">
+                                <i class="fa-solid fa-envelope-open-text"></i> Tenant Invites
+                            </a>
+                            <a class="sidebar-link {{ request()->is('manage/tenants*') ? 'active' : '' }}" href="{{ route('manage.tenants.index') }}">
+                                <i class="fa-solid fa-user-group"></i> Manage Tenants
+                            </a>
+                            <a class="sidebar-link {{ request()->is('manage/vendors*') ? 'active' : '' }}" href="{{ route('manage.vendors.index') }}">
+                                <i class="fa-solid fa-truck"></i> Manage Vendors
+                            </a>
+                        @endcan
                         @if(auth()->user()->hasRole('super_admin'))
                             <p class="sidebar-title mt-4">Administration</p>
                             <a class="sidebar-link {{ request()->is('admin/users*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">

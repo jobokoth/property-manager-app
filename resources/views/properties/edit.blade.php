@@ -29,17 +29,42 @@
                             @enderror
                         </div>
 
+                        @if(auth()->user()->hasRole('super_admin'))
+                            <div class="mb-3">
+                                <label for="owner_user_id" class="form-label">Owner</label>
+                                <select class="form-select @error('owner_user_id') is-invalid @enderror" id="owner_user_id" name="owner_user_id">
+                                    <option value="">Select Owner (Optional)</option>
+                                    @foreach($owners ?? [] as $owner)
+                                        <option value="{{ $owner->id }}" {{ old('owner_user_id', $property->owner_user_id) == $owner->id ? 'selected' : '' }}>
+                                            {{ $owner->name }} ({{ $owner->email }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('owner_user_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @else
+                            @if($property->owner)
+                                <div class="mb-3">
+                                    <label class="form-label">Owner</label>
+                                    <input type="text" class="form-control" value="{{ $property->owner->name }}" disabled>
+                                </div>
+                            @endif
+                        @endif
+
                         <div class="mb-3">
-                            <label for="owner_user_id" class="form-label">Owner</label>
-                            <select class="form-select @error('owner_user_id') is-invalid @enderror" id="owner_user_id" name="owner_user_id">
-                                <option value="">Select Owner (Optional)</option>
-                                @foreach($owners ?? [] as $owner)
-                                    <option value="{{ $owner->id }}" {{ old('owner_user_id', $property->owner_user_id) == $owner->id ? 'selected' : '' }}>
-                                        {{ $owner->name }} ({{ $owner->email }})
+                            <label for="property_manager_id" class="form-label">Property Manager</label>
+                            <select class="form-select @error('property_manager_id') is-invalid @enderror" id="property_manager_id" name="property_manager_id">
+                                <option value="">Select Property Manager (Optional)</option>
+                                @foreach($propertyManagers ?? [] as $manager)
+                                    <option value="{{ $manager->id }}" {{ old('property_manager_id', $currentManagerId ?? null) == $manager->id ? 'selected' : '' }}>
+                                        {{ $manager->name }} ({{ $manager->email }})
                                     </option>
                                 @endforeach
                             </select>
-                            @error('owner_user_id')
+                            <small class="text-muted">Assign a property manager to handle day-to-day operations</small>
+                            @error('property_manager_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

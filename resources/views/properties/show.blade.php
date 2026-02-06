@@ -174,6 +174,41 @@
             </div>
         </div>
     </div>
+
+    <!-- Caretakers Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Caretakers</h5>
+                    <a href="{{ route('caretakers.create') }}" class="btn btn-sm btn-primary">Add Caretaker</a>
+                </div>
+                <div class="card-body">
+                    @if($property->caretakers->count() > 0)
+                        <ul class="list-group list-group-flush">
+                            @foreach($property->caretakers as $caretaker)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $caretaker->name }}</strong>
+                                        <br><small class="text-muted">{{ $caretaker->email }}</small>
+                                        @if($caretaker->phone)
+                                            <br><small class="text-muted">{{ $caretaker->phone }}</small>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <a href="{{ route('caretakers.show', $caretaker) }}" class="btn btn-sm btn-info">View</a>
+                                        <a href="{{ route('caretaker-tasks.create') }}?caretaker_id={{ $caretaker->id }}&property_id={{ $property->id }}" class="btn btn-sm btn-success">Assign Task</a>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted mb-0">No caretakers assigned to this property.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
     @endif
 
     <!-- Units Section -->

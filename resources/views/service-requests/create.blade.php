@@ -13,36 +13,109 @@
                         @csrf
 
 @if(Auth::user()->hasRole('tenant'))
-                        <div class="alert alert-info">
-                            This request will be linked to your active tenancy.
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Property</label>
+                                <p class="form-control-plaintext fw-medium">{{ $activeTenancy->unit->property->name }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Unit</label>
+                                <p class="form-control-plaintext fw-medium">{{ $activeTenancy->unit->label }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted">Tenant</label>
+                                <p class="form-control-plaintext fw-medium">{{ Auth::user()->name }}</p>
+                            </div>
                         </div>
+                        <hr class="mb-4">
+
+                        <!-- Title Field (moved to top for tenants) -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title') }}" required placeholder="Brief summary of the issue">
+                            @error('title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Category and Priority -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Property</label>
-                                    <input type="text" class="form-control" value="{{ $activeTenancy->unit->property->name }}" disabled>
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select @error('category') is-invalid @enderror" id="category" name="category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="plumbing" {{ old('category') == 'plumbing' ? 'selected' : '' }}>Plumbing</option>
+                                        <option value="electrical" {{ old('category') == 'electrical' ? 'selected' : '' }}>Electrical</option>
+                                        <option value="carpentry" {{ old('category') == 'carpentry' ? 'selected' : '' }}>Carpentry</option>
+                                        <option value="painting" {{ old('category') == 'painting' ? 'selected' : '' }}>Painting</option>
+                                        <option value="cleaning" {{ old('category') == 'cleaning' ? 'selected' : '' }}>Cleaning</option>
+                                        <option value="appliance" {{ old('category') == 'appliance' ? 'selected' : '' }}>Appliance</option>
+                                        <option value="security" {{ old('category') == 'security' ? 'selected' : '' }}>Security</option>
+                                        <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Other</option>
+                                    </select>
+                                    @error('category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Unit</label>
-                                    <input type="text" class="form-control" value="{{ $activeTenancy->unit->label }}" disabled>
+                                    <label for="priority" class="form-label">Priority</label>
+                                    <select class="form-select @error('priority') is-invalid @enderror" id="priority" name="priority" required>
+                                        <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
+                                        <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
+                                        <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                    </select>
+                                    @error('priority')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="5" required placeholder="Please describe the issue in detail...">{{ old('description') }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Media Uploads for Tenant -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Tenancy</label>
-                                    <input type="text" class="form-control" value="{{ $activeTenancy->tenant->name }}" disabled>
+                                    <label for="images" class="form-label">Photos (up to 10)</label>
+                                    <input type="file" class="form-control @error('images') is-invalid @enderror" id="images" name="images[]" accept="image/*" multiple>
+                                    @error('images')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    @error('images.*')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Tenant</label>
-                                    <input type="text" class="form-control" value="{{ Auth::user()->name }}" disabled>
+                                    <label for="videos" class="form-label">Video (1 max)</label>
+                                    <input type="file" class="form-control @error('videos') is-invalid @enderror" id="videos" name="videos[]" accept="video/mp4,video/quicktime">
+                                    <small class="text-muted">Optional: Upload a single video of the issue</small>
+                                    @error('videos')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    @error('videos.*')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ route('service-requests.index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
                         </div>
                         @else
                         <div class="row">
@@ -114,7 +187,14 @@
                                 </div>
                             </div>
                         </div>
-                        @endif
+                        <!-- Title Field (for non-tenants) -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title') }}" required>
+                            @error('title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                         <div class="row">
                             <div class="col-md-6">
@@ -153,21 +233,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="title" class="form-label">Title</label>
-                            <input type="text" class="form-control @error('title') is-invalid @enderror" id="title" name="title" value="{{ old('title') }}" required>
-                            @error('title')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
                             <textarea class="form-control @error('description') is-invalid @enderror" id="description" name="description" rows="5" required>{{ old('description') }}</textarea>
                             @error('description')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
 
                         <div class="row">
                             <div class="col-md-6">
@@ -196,7 +267,6 @@
                             </div>
                         </div>
 
-@unless(Auth::user()->hasRole('tenant'))
                         <div class="mb-3">
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
@@ -212,12 +282,12 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-@endunless
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="{{ route('service-requests.index') }}" class="btn btn-secondary me-md-2">Cancel</a>
                             <button type="submit" class="btn btn-primary">Submit Request</button>
                         </div>
+                        @endif
                     </form>
                 </div>
             </div>

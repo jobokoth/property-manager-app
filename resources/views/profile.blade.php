@@ -21,11 +21,27 @@
                     @method('patch')
 
                     <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
-                        <input id="name" name="name" type="text" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" required autofocus>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <label class="form-label">Name</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input id="first_name" name="first_name" type="text"
+                                       class="form-control @error('first_name') is-invalid @enderror"
+                                       value="{{ old('first_name', $user->first_name) }}" required autofocus>
+                                @error('first_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input id="last_name" name="last_name" type="text"
+                                       class="form-control @error('last_name') is-invalid @enderror"
+                                       value="{{ old('last_name', $user->last_name) }}" required>
+                                @error('last_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">

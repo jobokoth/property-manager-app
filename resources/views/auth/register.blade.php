@@ -17,14 +17,29 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="name" class="form-label">{{ __('Name') }}</label>
-                        <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name" autofocus>
-
-                        @error('name')
-                            <span class="invalid-feedback" role="alert">
-                                <strong>{{ $message }}</strong>
-                            </span>
-                        @enderror
+                        <label class="form-label">{{ __('Name') }}</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input id="first_name" type="text" class="form-control @error('first_name') is-invalid @enderror"
+                                       name="first_name" value="{{ old('first_name') }}" required autocomplete="given-name" autofocus>
+                                @error('first_name')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input id="last_name" type="text" class="form-control @error('last_name') is-invalid @enderror"
+                                       name="last_name" value="{{ old('last_name') }}" required autocomplete="family-name">
+                                @error('last_name')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-3">
